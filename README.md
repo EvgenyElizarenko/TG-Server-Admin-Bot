@@ -1,3 +1,5 @@
+English: [README (English)](README.en.md)
+
 # TG-Server-Admin-Bot
 
 Инструкции:
