@@ -101,7 +101,7 @@ Typical working directory on the bot host:
 
 ## Where to find details
 
-- Installation and initial setup: instruction/install_bot.md
+- Installation and initial setup: instruction/install_bot_en.md
 - Managed node setup and sudoers examples: instruction/setup_node_en.md
 
 ## License

@@ -158,47 +158,7 @@ WantedBy=multi-user.target
 EOF
 ```
 
-The service runs as `tgbot`, not as root. Options like
-`ProtectSystem`, `ProtectHome` and `ReadWritePaths` limit filesystem
-access. If the bot writes to additional directories, add them
-explicitly to the service configuration.
-
-### 8. Start and verify
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now tg-server-bot.service
-```
-
-Check status:
-
-```bash
-sudo systemctl status tg-server-bot.service --no-pager
-```
-
-View live logs:
-
-```bash
-sudo journalctl -u tg-server-bot.service -f
-```
-
-Last 100 lines:
-
-```bash
-sudo journalctl -u tg-server-bot.service -n 100 --no-pager
-```
-
-Restart after changes:
-
-```bash
-sudo systemctl restart tg-server-bot.service
-```
-
-Stop the service:
-
-```bash
-sudo systemctl stop tg-server-bot.service
-```
+The installer will then be called by systemd and managed automatically.
 
 ## First steps after startup
 
