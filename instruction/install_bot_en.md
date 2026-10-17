@@ -65,7 +65,7 @@ If `tgbot` already exists, do not run `useradd` again. Check owners and permissi
 
 ```bash
 sudo -u tgbot wget -O /home/tgbot/tg-bot-env/bot.py \
-  https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/bot.py
+  https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/bot_souce_code/bot.py
 
 sudo chmod 700 /home/tgbot/tg-bot-env/bot.py
 ```
