@@ -4,8 +4,12 @@ English: [README (English)](README.en.md)
 
 ## Инструкции
 
-- [Установка бота (install_bot)](https://github.com/EvgenyElizarenko/TG-Server-Admin-Bot/blob/main/instruction/install_bot.md)
-- [Настройка управляемого узла (setup_node)](https://github.com/EvgenyElizarenko/TG-Server-Admin-Bot/blob/main/instruction/setup_node.md)
+- [Установка бота (install_bot)](
+  https://github.com/EvgenyElizarenko/TG-Server-Admin-Bot/blob/main/instruction/install_bot.md
+)
+- [Настройка управляемого узла (setup_node)](
+  https://github.com/EvgenyElizarenko/TG-Server-Admin-Bot/blob/main/instruction/setup_node.md
+)
 
 ## Кратко
 
@@ -46,13 +50,19 @@ instruction. Быстрая автоматическая установка вы
 где будет работать бот:
 
 ```bash
-wget -O install_bot.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/install_bot.sh && chmod +x install_bot.sh && sudo ./install_bot.sh
+wget -O install_bot.sh \
+  https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/install_bot.sh && \
+  chmod +x install_bot.sh && \
+  sudo ./install_bot.sh
 ```
 
 Настройка управляемого узла выполняется на целевом сервере:
 
 ```bash
-wget -O setup_node.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/setup_node.sh && chmod +x setup_node.sh && sudo ./setup_node.sh
+wget -O setup_node.sh \
+  https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/setup_node.sh && \
+  chmod +x setup_node.sh && \
+  sudo ./setup_node.sh
 ```
 
 ## Быстрые шаги после установки

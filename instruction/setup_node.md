@@ -12,7 +12,10 @@ CentOS, Rocky Linux, AlmaLinux) для безопасного подключен
 подключаемом сервере от имени `root` или `sudo`:
 
 ```bash
-wget -O setup_node.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/setup_node.sh && chmod +x setup_node.sh && sudo ./setup_node.sh
+wget -O setup_node.sh \
+  https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/setup_node.sh && \
+  chmod +x setup_node.sh && \
+  sudo ./setup_node.sh
 ```
 
 ### Что сделает скрипт

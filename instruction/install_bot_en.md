@@ -1,26 +1,37 @@
 # TG Server Admin Bot
 
-Installation guide and initial setup for the management Telegram bot on Linux servers: Ubuntu, Debian, CentOS, Rocky Linux and AlmaLinux.
+Installation guide and initial setup for the management Telegram bot on
+Linux servers: Ubuntu, Debian, CentOS, Rocky Linux and AlmaLinux.
 
 ## Quick one-line install
 
-Run the following command as root or a user with sudo privileges. The script will download the installer from the official repository and perform the installation:
+Run the following command as root or a user with sudo privileges. The
+script will download the installer from the official repository and
+perform the installation:
 
 ```bash
-wget -O install_bot.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/install_bot.sh && chmod +x install_bot.sh && sudo ./install_bot.sh
+wget -O install_bot.sh \
+  https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/install_bot.sh && \
+  chmod +x install_bot.sh && \
+  sudo ./install_bot.sh
 ```
 
 The installer will automatically:
 
-- install system dependencies: Python 3, `python3-venv`, OpenSSH client, `curl` and `git`;
-- create an unprivileged system user `tgbot` with home directory `/home/tgbot`;
+- install system dependencies: Python 3, `python3-venv`, OpenSSH
+  client, `curl` and `git`;
+- create an unprivileged system user `tgbot` with home directory
+  `/home/tgbot`;
 - prepare working directories with restrictive permissions;
 - place the executable `bot.py`;
-- create a Python virtual environment and install `aiogram`, `asyncssh` and `python-dotenv`;
-- prompt for the Telegram bot token and administrator Telegram IDs and save them in a private `.env` file;
+- create a Python virtual environment and install `aiogram`,
+  `asyncssh` and `python-dotenv`;
+- prompt for the Telegram bot token and administrator Telegram IDs and
+  save them in a private `.env` file;
 - create and start a systemd service named `tg-server-bot.service`.
 
-> Before running, make sure you trust the installer's source and download it from the official project repository.
+> Before running, make sure you trust the installer's source and
+> download it from the official project repository.
 
 ## Step-by-step manual installation
 
@@ -53,7 +64,8 @@ sudo chmod 700 /home/tgbot/tg-bot-env/keys
 sudo chown -R tgbot:tgbot /home/tgbot
 ```
 
-If `tgbot` already exists, do not run `useradd` again. Check owners and permissions before continuing.
+If `tgbot` already exists, do not run `useradd` again. Check owners and
+permissions before continuing.
 
 ### 3. Place bot code
 
@@ -86,7 +98,9 @@ ADMIN_IDS=123456789,987654321
 EOF
 ```
 
-Replace the example values with the real bot token and administrator Telegram IDs. Provide IDs as comma-separated numbers (without spaces) if that matches the format expected by the bot version you use.
+Replace the example values with the real bot token and administrator
+Telegram IDs. Provide IDs as comma-separated numbers (without spaces)
+if that matches the format expected by the bot version you are using.
 
 Restrict access to the file:
 
@@ -95,7 +109,8 @@ sudo chown tgbot:tgbot /home/tgbot/tg-bot-env/.env
 sudo chmod 600 /home/tgbot/tg-bot-env/.env
 ```
 
-**Do not publish the token or share the `.env` file.** If the token is exposed, revoke it in BotFather and create a new one.
+**Do not publish the token or share the `.env` file.** If the token is
+exposed, revoke it in BotFather and create a new one.
 
 ### 6. Initialize service files
 
@@ -143,7 +158,10 @@ WantedBy=multi-user.target
 EOF
 ```
 
-The service runs as `tgbot`, not as root. Options like `ProtectSystem`, `ProtectHome` and `ReadWritePaths` limit filesystem access. If the bot writes to additional directories, add them explicitly to the service configuration.
+The service runs as `tgbot`, not as root. Options like
+`ProtectSystem`, `ProtectHome` and `ReadWritePaths` limit filesystem
+access. If the bot writes to additional directories, add them
+explicitly to the service configuration.
 
 ### 8. Start and verify
 
@@ -186,21 +204,26 @@ sudo systemctl stop tg-server-bot.service
 
 1. Open a conversation with the bot in Telegram and send `/start`.
 2. Send `/key` to receive a personal Ed25519 public SSH key.
-3. On each target server add the received public key to the `authorized_keys` file of the user the bot will connect as (for example, `botadmin`):
+3. On each target server add the received public key to the
+   `authorized_keys` file of the user the bot will connect as (for
+   example, `botadmin`):
 
-```bash
-sudo install -d -m 700 -o botadmin -g botadmin /home/botadmin/.ssh
-sudo -u botadmin touch /home/botadmin/.ssh/authorized_keys
-sudo chmod 600 /home/botadmin/.ssh/authorized_keys
-```
+   ```bash
+   sudo install -d -m 700 -o botadmin -g botadmin /home/botadmin/.ssh
+   sudo -u botadmin touch /home/botadmin/.ssh/authorized_keys
+   sudo chmod 600 /home/botadmin/.ssh/authorized_keys
+   ```
 
-Then append the public key as a single line to `/home/botadmin/.ssh/authorized_keys` and verify ownership:
+   Then append the public key as a single line to
+   `/home/botadmin/.ssh/authorized_keys` and verify ownership:
 
-```bash
-sudo chown botadmin:botadmin /home/botadmin/.ssh/authorized_keys
-```
+   ```bash
+   sudo chown botadmin:botadmin /home/botadmin/.ssh/authorized_keys
+   ```
 
-4. Configure `sudoers` on target servers to grant `botadmin` only the commands required by the bot. Edit rules with `visudo` and avoid granting `NOPASSWD: ALL` unless that matches your security model.
+4. Configure `sudoers` on target servers to grant `botadmin` only the
+   commands required by the bot. Edit rules with `visudo` and avoid
+   granting `NOPASSWD: ALL` unless that matches your security model.
 
 ## Troubleshooting
 
@@ -218,7 +241,8 @@ sudo ls -l /home/tgbot/tg-bot-env
 sudo ls -l /home/tgbot/tg-bot-env/.env
 ```
 
-Confirm that the token and admin IDs in `.env` are correct and that the virtualenv contains the required packages.
+Confirm that the token and admin IDs in `.env` are correct and that the
+virtualenv contains the required packages.
 
 ## Directory layout
 

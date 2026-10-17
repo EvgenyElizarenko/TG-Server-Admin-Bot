@@ -11,7 +11,10 @@ For a quick automated setup, run the following command on the target
 server as `root`:
 
 ```bash
-wget -O setup_node.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/setup_node.sh && chmod +x setup_node.sh && sudo ./setup_node.sh
+wget -O setup_node.sh \
+  https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/setup_node.sh && \
+  chmod +x setup_node.sh && \
+  sudo ./setup_node.sh
 ```
 
 ### What the script does
