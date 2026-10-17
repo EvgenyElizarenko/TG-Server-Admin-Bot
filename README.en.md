@@ -3,8 +3,8 @@
 English version of the README is available. For the Russian README see README.md
 
 Quick links:
-- [Installation guide]: (https://github.com/EvgenyElizarenko/TG-Server-Admin-Bot/blob/main/instruction/install_bot_en.md)
-- [Managed node setup]: (https://github.com/EvgenyElizarenko/TG-Server-Admin-Bot/blob/main/instruction/setup_node_en.md)
+- [Installation guide](https://github.com/EvgenyElizarenko/TG-Server-Admin-Bot/blob/main/instruction/install_bot_en.md)
+- [Managed node setup](https://github.com/EvgenyElizarenko/TG-Server-Admin-Bot/blob/main/instruction/setup_node_en.md)
 
 Overview
 --------
