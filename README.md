@@ -51,7 +51,8 @@ instruction. Быстрая автоматическая установка вы
 
 ```bash
 wget -O install_bot.sh \
-  https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/install_bot.sh && \
+  'https://raw.githubusercontent.com/EvgenyElizarenko/'\
+  'TG-Server-Admin-Bot/refs/heads/main/script'"'"'s/install_bot.sh' && \
   chmod +x install_bot.sh && \
   sudo ./install_bot.sh
 ```
@@ -60,7 +61,8 @@ wget -O install_bot.sh \
 
 ```bash
 wget -O setup_node.sh \
-  https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/setup_node.sh && \
+  'https://raw.githubusercontent.com/EvgenyElizarenko/'\
+  'TG-Server-Admin-Bot/refs/heads/main/script'"'"'s/setup_node.sh' && \
   chmod +x setup_node.sh && \
   sudo ./setup_node.sh
 ```
