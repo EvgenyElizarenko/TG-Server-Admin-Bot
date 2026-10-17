@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Проверка кода
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Получить исходный код
+        uses: actions/checkout@v4
+
+      - name: Установить Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Проверить синтаксис Python
+        run: python -m compileall -q .
+
+      - name: Проверить синтаксис Bash
+        run: |
+          bash -n install_bot.sh
+          bash -n setup_node.sh
+
+      - name: Установить ShellCheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Проверить Bash-скрипты
+        run: |
+          shellcheck install_bot.sh setup_node.sh
+
+      - name: Установить проверку Markdown
+        run: npm install --global markdownlint-cli2
+
+      - name: Проверить Markdown
+        run: markdownlint-cli2 README.md install_bot.md setup_node.md
