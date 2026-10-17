@@ -10,24 +10,24 @@ AlmaLinux.
 Скрипт загрузит установщик из официального репозитория и выполнит
 установку:
 
-``` bash
+```bash
 wget -O install_bot.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/install_bot.sh && chmod +x install_bot.sh && sudo ./install_bot.sh
 ```
 
 Установщик автоматически:
 
--   установит системные зависимости: Python 3, `python3-venv`,
-    OpenSSH-клиент, `curl` и `git`;
--   создаст непривилегированного системного пользователя `tgbot` с
-    домашним каталогом `/home/tgbot`;
--   подготовит рабочие каталоги с ограниченными правами доступа;
--   разместит исполняемый код `bot.py`;
--   создаст виртуальное окружение Python и установит `aiogram`,
-    `asyncssh` и `python-dotenv`;
--   запросит токен Telegram-бота и Telegram ID администраторов и
-    сохранит их в закрытом файле `.env`;
--   создаст и запустит службу `systemd` с именем
-    `tg-server-bot.service`.
+- установит системные зависимости: Python 3, `python3-venv`, OpenSSH-
+  клиент, `curl` и `git`;
+- создаст непривилегированного системного пользователя `tgbot` с
+  домашним каталогом `/home/tgbot`;
+- подготовит рабочие каталоги с ограниченными правами доступа;
+- разместит исполняемый код `bot.py`;
+- создаст виртуальное окружение Python и установит `aiogram`,
+  `asyncssh` и `python-dotenv`;
+- запросит токен Telegram-бота и Telegram ID администраторов и
+  сохранит их в закрытом файле `.env`;
+- создаст и запустит службу `systemd` с именем
+  `tg-server-bot.service`.
 
 > Перед запуском убедитесь, что доверяете исходному коду установщика и
 > скачиваете его из официального репозитория проекта.
@@ -38,14 +38,14 @@ wget -O install_bot.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Ser
 
 **Ubuntu / Debian:**
 
-``` bash
+```bash
 sudo apt-get update -qq
 sudo apt-get install -y python3 python3-venv python3-pip openssh-client curl git
 ```
 
 **CentOS / Rocky Linux / AlmaLinux:**
 
-``` bash
+```bash
 sudo dnf install -y python3 python3-pip openssh-clients curl git
 ```
 
@@ -53,7 +53,7 @@ sudo dnf install -y python3 python3-pip openssh-clients curl git
 
 Создайте непривилегированного пользователя `tgbot` и рабочие каталоги:
 
-``` bash
+```bash
 sudo useradd -m -s /bin/bash tgbot
 sudo mkdir -p /home/tgbot/tg-bot-env/keys
 
@@ -68,7 +68,7 @@ sudo chown -R tgbot:tgbot /home/tgbot
 
 ### 3. Размещение кода бота
 
-``` bash
+```bash
 sudo -u tgbot wget -O /home/tgbot/tg-bot-env/bot.py \
   https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/bot.py
 
@@ -77,7 +77,7 @@ sudo chmod 700 /home/tgbot/tg-bot-env/bot.py
 
 ### 4. Создание виртуального окружения Python
 
-``` bash
+```bash
 sudo -u tgbot python3 -m venv /home/tgbot/tg-bot-env/venv
 sudo -u tgbot /home/tgbot/tg-bot-env/venv/bin/pip install --upgrade pip
 sudo -u tgbot /home/tgbot/tg-bot-env/venv/bin/pip install \
@@ -90,7 +90,7 @@ sudo -u tgbot /home/tgbot/tg-bot-env/venv/bin/pip install \
 
 Создайте файл `/home/tgbot/tg-bot-env/.env`:
 
-``` bash
+```bash
 sudo tee /home/tgbot/tg-bot-env/.env > /dev/null <<'EOF'
 BOT_TOKEN=ВСТАВЬТЕ_ТОКЕН_ОТ_BOTFATHER
 ADMIN_IDS=123456789,987654321
@@ -98,12 +98,12 @@ EOF
 ```
 
 Замените примерные значения на настоящий токен бота и Telegram ID
-администраторов. Укажите ID числами через запятую, без пробелов --- если
-это соответствует формату, ожидаемому используемой версией бота.
+администраторов. Укажите ID числами через запятую, без пробелов —
+если это соответствует формату, ожидаемому используемой версией бота.
 
 Ограничьте доступ к файлу:
 
-``` bash
+```bash
 sudo chown tgbot:tgbot /home/tgbot/tg-bot-env/.env
 sudo chmod 600 /home/tgbot/tg-bot-env/.env
 ```
@@ -113,7 +113,7 @@ sudo chmod 600 /home/tgbot/tg-bot-env/.env
 
 ### 6. Инициализация служебных файлов
 
-``` bash
+```bash
 cd /home/tgbot/tg-bot-env
 
 sudo -u tgbot sh -c 'echo "{}" > servers.json'
@@ -128,7 +128,7 @@ sudo chmod 600 servers.json users.json known_hosts audit.log
 
 Создайте файл `/etc/systemd/system/tg-server-bot.service`:
 
-``` bash
+```bash
 sudo tee /etc/systemd/system/tg-server-bot.service > /dev/null <<'EOF'
 [Unit]
 Description=Telegram Server Admin & Monitoring Bot
@@ -159,87 +159,85 @@ EOF
 
 Служба запускается от имени `tgbot`, а не `root`. Параметры
 `ProtectSystem`, `ProtectHome` и `ReadWritePaths` ограничивают доступ
-процесса к файловой системе. Если бот использует дополнительные каталоги
-для записи, их потребуется явно учесть в настройках службы.
+процесса к файловой системе. Если бот использует дополнительные
+каталоги для записи, их потребуется явно учесть в настройках службы.
 
 ### 8. Запуск и проверка службы
 
-``` bash
+```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now tg-server-bot.service
 ```
 
 Проверить состояние:
 
-``` bash
+```bash
 sudo systemctl status tg-server-bot.service --no-pager
 ```
 
 Посмотреть журнал в реальном времени:
 
-``` bash
+```bash
 sudo journalctl -u tg-server-bot.service -f
 ```
 
 Последние 100 строк журнала:
 
-``` bash
+```bash
 sudo journalctl -u tg-server-bot.service -n 100 --no-pager
 ```
 
 Перезапустить службу после изменения конфигурации или кода:
 
-``` bash
+```bash
 sudo systemctl restart tg-server-bot.service
 ```
 
 Остановить службу:
 
-``` bash
+```bash
 sudo systemctl stop tg-server-bot.service
 ```
 
 ## Первые действия после запуска
 
-1.  Откройте диалог с ботом в Telegram и отправьте `/start`.
+1. Откройте диалог с ботом в Telegram и отправьте `/start`.
+2. Отправьте `/key`, чтобы получить персональный публичный SSH-ключ
+   Ed25519.
+3. На каждом целевом сервере добавьте полученный публичный ключ в файл
+   `authorized_keys` пользователя, от имени которого бот должен
+   подключаться. Например, для пользователя `botadmin`:
 
-2.  Отправьте `/key`, чтобы получить персональный публичный SSH-ключ
-    Ed25519.
+   ```bash
+   sudo install -d -m 700 -o botadmin -g botadmin /home/botadmin/.ssh
+   sudo -u botadmin touch /home/botadmin/.ssh/authorized_keys
+   sudo chmod 600 /home/botadmin/.ssh/authorized_keys
+   ```
 
-3.  На каждом целевом сервере добавьте полученный публичный ключ в файл
-    `authorized_keys` пользователя, от имени которого бот должен
-    подключаться. Например, для пользователя `botadmin`:
+   Затем добавьте содержимое публичного ключа отдельной строкой в
+   `/home/botadmin/.ssh/authorized_keys` и проверьте владельца файла:
 
-    ``` bash
-    sudo install -d -m 700 -o botadmin -g botadmin /home/botadmin/.ssh
-    sudo -u botadmin touch /home/botadmin/.ssh/authorized_keys
-    sudo chmod 600 /home/botadmin/.ssh/authorized_keys
-    ```
+   ```bash
+   sudo chown botadmin:botadmin /home/botadmin/.ssh/authorized_keys
+   ```
 
-    Затем добавьте содержимое публичного ключа отдельной строкой в
-    `/home/botadmin/.ssh/authorized_keys` и проверьте владельца файла:
-
-    ``` bash
-    sudo chown botadmin:botadmin /home/botadmin/.ssh/authorized_keys
-    ```
-
-4.  Настройте `sudoers` на целевых серверах, предоставив пользователю
-    `botadmin` только те команды, которые действительно нужны функциям
-    бота. Для редактирования правил используйте `visudo` и избегайте
-    безусловного предоставления `NOPASSWD: ALL`, если это не является
-    осознанным требованием вашей модели безопасности.
+4. Настройте `sudoers` на целевых серверах, предоставив пользователю
+   `botadmin` только те команды, которые действительно нужны функциям
+   бота. Для редактирования правил используйте `visudo` и избегайте
+   безусловного предоставления `NOPASSWD: ALL`, если это не является
+   осознанным требованием вашей модели безопасности.
 
 ## Диагностика
 
 Если бот не запускается, сначала проверьте журнал:
 
-``` bash
+```bash
 sudo journalctl -u tg-server-bot.service -n 100 --no-pager
 ```
 
 Проверьте права и наличие основных файлов:
 
-``` bash
+```bash
 sudo ls -ld /home/tgbot /home/tgbot/tg-bot-env
 sudo ls -l /home/tgbot/tg-bot-env
 sudo ls -l /home/tgbot/tg-bot-env/.env
@@ -253,7 +251,7 @@ sudo ls -l /home/tgbot/tg-bot-env/.env
 После установки рабочая директория должна содержать примерно следующие
 файлы:
 
-``` text
+```text
 /home/tgbot/
 └── tg-bot-env/
     ├── bot.py
