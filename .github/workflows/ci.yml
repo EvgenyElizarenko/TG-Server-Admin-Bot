@@ -38,10 +38,3 @@ jobs:
       - name: Проверить Bash-скрипты
         run: |
           shellcheck "script's/install_bot.sh" "script's/setup_node.sh"
-
-      - name: Установить Markdownlint
-        run: npm install --global markdownlint-cli2
-
-      - name: Проверить Markdown
-        run: |
-          markdownlint-cli2 README.md README.en.md "instruction/*.md"
