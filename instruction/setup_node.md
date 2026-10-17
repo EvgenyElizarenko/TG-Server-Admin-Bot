@@ -4,12 +4,12 @@
 
 ---
 
-## ⚡ Автоматическая настройка в 1 клик (рекомендуемый способ)
+## Автоматическая настройка в 1 клик (рекомендуемый способ)
 
 Для быстрой автоматической настройки выполните следующую команду на подключаемом сервере от имени `root` (или через `sudo`):
 
 ```bash
-wget -O setup_node.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/setup_node.sh && chmod +x setup_node.sh && sudo ./setup_node.sh
+wget -O setup_node.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/setup_node.sh && chmod +x setup_node.sh && sudo ./setup_node.sh
 ```
 
 ### Что сделает скрипт:
@@ -26,7 +26,7 @@ wget -O setup_node.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Serv
 
 ---
 
-## 🛠 Пошаговая ручная настройка
+## Пошаговая ручная настройка
 
 Если вы хотите выполнить настройку вручную или детальнее контролировать предоставляемые права, выполните следующие шаги.
 
