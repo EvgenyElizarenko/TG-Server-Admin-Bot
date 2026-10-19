@@ -48,11 +48,7 @@ principle of least privilege.
 Automated one-line install on the host where the bot will run:
 
 ```bash
-wget -O install_bot.sh \
-  'https://raw.githubusercontent.com/EvgenyElizarenko/'\
-  'TG-Server-Admin-Bot/refs/heads/main/script'"'"'s/install_bot.sh' && \
-  chmod +x install_bot.sh && \
-  sudo ./install_bot.sh
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script%27s/install_bot.sh)"
 ```
 
 Prepare a managed node by running this on the target server:
