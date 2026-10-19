@@ -10,10 +10,7 @@ script will download the installer from the official repository and
 perform the installation:
 
 ```bash
-wget -O install_bot.sh \
-  https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/install_bot.sh && \
-  chmod +x install_bot.sh && \
-  sudo ./install_bot.sh
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script%27s/install_bot.sh)"
 ```
 
 The installer will automatically:
