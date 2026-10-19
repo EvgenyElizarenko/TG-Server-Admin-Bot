@@ -58,11 +58,7 @@ wget -O install_bot.sh \
 Prepare a managed node by running this on the target server:
 
 ```bash
-wget -O setup_node.sh \
-  'https://raw.githubusercontent.com/EvgenyElizarenko/'\
-  'TG-Server-Admin-Bot/refs/heads/main/script'"'"'s/setup_node.sh' && \
-  chmod +x setup_node.sh && \
-  sudo ./setup_node.sh
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script%27s/setup_node.sh)"
 ```
 
 ## Post-install steps
