@@ -9,8 +9,7 @@
 Для быстрой автоматической настройки выполните следующую команду на подключаемом сервере от имени `root` (или через `sudo`):
 
 ```bash
-wget -O setup_node.sh https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script's/setup_node.sh && chmod +x setup_node.sh && sudo ./setup_node.sh
-```
+sudo bash -c "$(curl -fsSL https://raw.githubusercontent.com/EvgenyElizarenko/TG-Server-Admin-Bot/refs/heads/main/script%27s/setup_node.sh)"```
 
 ### Что сделает скрипт:
 1. Проверит и установит необходимые системные утилиты (`curl`, `iproute2`, `vnstat`, `sudo`, `openssh-server`).
