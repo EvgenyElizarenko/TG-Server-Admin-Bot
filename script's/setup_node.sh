@@ -1,207 +1,142 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_USER="botadmin"
-TARGET_HOME="/home/${TARGET_USER}"
-SUDOERS_FILE="/etc/sudoers.d/${TARGET_USER}"
+# ================= КОНФИГУРАЦИЯ ПО УМОЛЧАНИЮ =================
+BOT_USER="botadmin"
+SSH_PUB_KEY="${1:-}" # Можно передать ключ первым аргументом: ./setup_node.sh "ssh-ed25519 AAAA..."
+# =============================================================
 
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m'
-
-log_info() { echo -e "${GREEN}[+]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[!]${NC} $1"; }
-log_err()  { echo -e "${RED}[x]${NC} $1"; }
-
-# 1. Проверка прав root
 if [ "$(id -u)" -ne 0 ]; then
-    log_err "Этот скрипт должен запускаться с правами root (sudo)."
+    echo "❌ Ошибка: скрипт должен быть запущен с правами root!" >&2
     exit 1
 fi
 
-log_info "Подготовка сервера для управления через TG Server Admin Bot..."
+echo "=== [1/6] Проверка SSH-ключа ==="
+if [ -z "$SSH_PUB_KEY" ]; then
+    echo -n "Вставьте ваш публичный SSH-ключ из бота (команда /key): "
+    read -r SSH_PUB_KEY
+fi
 
-# 2. Установка базовых утилит диагностики, используемых ботом
-log_info "Проверка и установка базовых пакетов..."
+if [[ ! "$SSH_PUB_KEY" =~ ^ssh-(ed25519|rsa) ]]; then
+    echo "❌ Ошибка: передан некорректный формат публичного SSH-ключа!" >&2
+    exit 1
+fi
+
+echo "=== [2/6] Установка базовых утилит ==="
 if command -v apt-get >/dev/null 2>&1; then
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -qq
-    apt-get install -y -qq curl iproute2 vnstat sudo openssh-server >/dev/null 2>&1 || true
+    apt-get install -y -qq sudo curl iproute2 vnstat ufw >/dev/null
 elif command -v dnf >/dev/null 2>&1; then
-    dnf install -y -q curl iproute vnstat sudo openssh-server >/dev/null 2>&1 || true
+    dnf install -y -q sudo curl iproute vnstat >/dev/null
 fi
 
-# 3. Создание пользователя botadmin
-if id "${TARGET_USER}" >/dev/null 2>&1; then
-    log_info "Пользователь ${TARGET_USER} уже существует."
-else
-    log_info "Создание системного пользователя ${TARGET_USER}..."
-    useradd -m -s /bin/bash "${TARGET_USER}"
+# Включаем сбор статистики vnstat, если служба присутствует
+systemctl enable --now vnstat 2>/dev/null || true
+
+echo "=== [3/6] Создание пользователя ${BOT_USER} ==="
+if ! id -u "$BOT_USER" >/dev/null 2>&1; then
+    useradd -m -s /bin/bash "$BOT_USER"
+    echo "Пользователь ${BOT_USER} создан."
 fi
 
-# 4. Добавление в группу docker (если Docker установлен)
-if command -v docker >/dev/null 2>&1; then
-    log_info "Docker обнаружен на сервере. Добавление ${TARGET_USER} в группу docker..."
-    usermod -aG docker "${TARGET_USER}"
-else
-    log_warn "Docker не найден на сервере (мониторинг контейнеров будет отключен)."
+# Добавляем в группы управления
+usermod -aG sudo "$BOT_USER" 2>/dev/null || usermod -aG wheel "$BOT_USER" 2>/dev/null || true
+if getent group docker >/dev/null 2>&1; then
+    usermod -aG docker "$BOT_USER"
 fi
 
-# 5. Запрос и настройка SSH-ключа
-SSH_DIR="${TARGET_HOME}/.ssh"
-AUTH_KEYS="${SSH_DIR}/authorized_keys"
+# Настройка authorized_keys
+USER_HOME=$(eval echo "~${BOT_USER}")
+mkdir -p "${USER_HOME}/.ssh"
+chmod 0700 "${USER_HOME}/.ssh"
+echo "$SSH_PUB_KEY" > "${USER_HOME}/.ssh/authorized_keys"
+chmod 0600 "${USER_HOME}/.ssh/authorized_keys"
+chown -R "${BOT_USER}:${BOT_USER}" "${USER_HOME}/.ssh"
 
-mkdir -p "${SSH_DIR}"
-chmod 700 "${SSH_DIR}"
+# Беспарольный sudo для botadmin
+cat << 'EOF' > "/etc/sudoers.d/99-tgbot-${BOT_USER}"
+botadmin ALL=(ALL) NOPASSWD: ALL
+EOF
+chmod 0440 "/etc/sudoers.d/99-tgbot-${BOT_USER}"
 
-echo ""
-echo -e "${YELLOW}================================================================${NC}"
-echo -e "Введите персональный открытый SSH-ключ (из Telegram-бота по команде ${GREEN}/key${NC}):"
-echo -e "${YELLOW}================================================================${NC}"
-read -rp "SSH Public Key: " INPUT_SSH_KEY
+echo "=== [4/6] Установка системных скриптов бота ==="
 
-if [[ -z "${INPUT_SSH_KEY// }" ]]; then
-    log_err "Ключ не может быть пустым. Прерывание установки."
-    exit 1
-fi
-
-# Проверяем, чтобы ключ начинался с валидного префикса SSH
-if [[ ! "${INPUT_SSH_KEY}" =~ ^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) ]]; then
-    log_warn "Введенная строка не похожа на валидный публичный ключ OpenSSH."
-fi
-
-# Записываем ключ (не дублируя существующие)
-touch "${AUTH_KEYS}"
-if ! grep -qF "${INPUT_SSH_KEY}" "${AUTH_KEYS}"; then
-    echo "${INPUT_SSH_KEY}" >> "${AUTH_KEYS}"
-    log_info "Ключ успешно добавлен в ${AUTH_KEYS}"
-else
-    log_info "Ключ уже присутствует в ${AUTH_KEYS}"
-fi
-
-chmod 600 "${AUTH_KEYS}"
-chown -R "${TARGET_USER}:${TARGET_USER}" "${SSH_DIR}"
-
-# 6. Создание системных скриптов управления в /usr/local/sbin
-log_info "Создание служебных скриптов в /usr/local/sbin/..."
-mkdir -p /usr/local/sbin
-
-# Скрипт полного обновления ОС
+# 1. Скрипт обновления ОС (/usr/local/sbin/update.sh)
 cat << 'EOF' > /usr/local/sbin/update.sh
 #!/usr/bin/env bash
 set -e
 export DEBIAN_FRONTEND=noninteractive
-
-echo "=== [$(date)] Запуск обновления пакетов ==="
 if command -v apt-get >/dev/null 2>&1; then
-    apt-get update -y
-    apt-get dist-upgrade -y
-    apt-get autoremove -y
-    apt-get clean
+    apt-get update && apt-get dist-upgrade -y && apt-get autoremove -y && apt-get clean
 elif command -v dnf >/dev/null 2>&1; then
-    dnf upgrade -y --refresh
-    dnf autoremove -y
-    dnf clean all
-else
-    echo "Неподдерживаемый пакетный менеджер." >&2
-    exit 1
+    dnf upgrade -y && dnf autoremove -y
 fi
-echo "=== [$(date)] Обновление успешно завершено ==="
+exit 0
 EOF
+chmod 0750 /usr/local/sbin/update.sh
 
-# Скрипты временного включения/отключения root-доступа
-cat << 'EOF' > /usr/local/sbin/root.sh
-#!/usr/bin/env bash
-set -e
-SSHD_DROPIN="/etc/ssh/sshd_config.d/99-tgbot-temp-root.conf"
-mkdir -p /etc/ssh/sshd_config.d
-
-echo "PermitRootLogin yes" > "$SSHD_DROPIN"
-systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true
-echo "Root-доступ активирован на 2 минуты..."
-
-(
-    sleep 120
-    if [ -f "$SSHD_DROPIN" ]; then
-        rm -f "$SSHD_DROPIN"
-        systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true
-    fi
-) >/dev/null 2>&1 &
-EOF
-
+# 2. Скрипт закрытия root-доступа (/usr/local/sbin/unroot.sh)
 cat << 'EOF' > /usr/local/sbin/unroot.sh
 #!/usr/bin/env bash
-set -e
-SSHD_DROPIN="/etc/ssh/sshd_config.d/99-tgbot-temp-root.conf"
-rm -f "$SSHD_DROPIN"
-systemctl reload ssh 2>/dev/null || systemctl reload sshd 2>/dev/null || true
-echo "Root-доступ принудительно отключен."
+sed -i -E 's/^#?[[:space:]]*PermitRootLogin[[:space:]]+.*/PermitRootLogin no/' /etc/ssh/sshd_config
+if [ -d /etc/ssh/sshd_config.d ]; then
+    rm -f /etc/ssh/sshd_config.d/99-tgbot-root.conf
+fi
+systemctl reload ssh || systemctl reload sshd
+echo "Root-доступ по SSH отключен."
 EOF
+chmod 0750 /usr/local/sbin/unroot.sh
 
-chmod 750 /usr/local/sbin/update.sh /usr/local/sbin/root.sh /usr/local/sbin/unroot.sh
-chown root:root /usr/local/sbin/update.sh /usr/local/sbin/root.sh /usr/local/sbin/unroot.sh
+# 3. Скрипт временного включения root на 2 минуты (/usr/local/sbin/root.sh)
+cat << 'EOF' > /usr/local/sbin/root.sh
+#!/usr/bin/env bash
+mkdir -p /etc/ssh/sshd_config.d
+echo "PermitRootLogin yes" > /etc/ssh/sshd_config.d/99-tgbot-root.conf
+systemctl reload ssh || systemctl reload sshd
+echo "Root-доступ включен на 120 секунд."
 
-# 7. Динамическое определение бинарных путей и настройка sudoers
-log_info "Формирование правил sudoers..."
-
-find_bin() {
-    local cmd="$1"
-    command -v "$cmd" 2>/dev/null || echo "/usr/bin/$cmd"
+# Планируем автоматический откат через фоновый таймер systemd
+systemd-run --on-active=120s --unit=tgbot-unroot-timer /usr/local/sbin/unroot.sh >/dev/null 2>&1 || {
+    ( sleep 120 && /usr/local/sbin/unroot.sh ) >/dev/null 2>&1 &
 }
-
-BIN_SYSTEMD_RUN=$(find_bin systemd-run)
-BIN_SYSTEMCTL=$(find_bin systemctl)
-BIN_JOURNALCTL=$(find_bin journalctl)
-BIN_UFW=$(find_bin ufw)
-BIN_FAIL2BAN=$(find_bin fail2ban-client)
-BIN_SS=$(find_bin ss)
-BIN_CERTBOT=$(find_bin certbot)
-
-cat << EOF > "${SUDOERS_FILE}"
-# Разрешенные команды для бота мониторинга TG Server Admin Bot
-${TARGET_USER} ALL=(ALL) NOPASSWD: \\
-    /usr/local/sbin/update.sh, \\
-    /usr/local/sbin/root.sh, \\
-    /usr/local/sbin/unroot.sh, \\
-    ${BIN_SYSTEMD_RUN} --unit=tgbot-upgrade --remain-after-exit /usr/local/sbin/update.sh, \\
-    ${BIN_SYSTEMCTL} stop tgbot-upgrade, \\
-    ${BIN_SYSTEMCTL} reset-failed tgbot-upgrade, \\
-    ${BIN_JOURNALCTL} -u tgbot-upgrade *, \\
-    ${BIN_SYSTEMCTL} reboot, \\
-    ${BIN_UFW} status numbered, \\
-    ${BIN_FAIL2BAN} *, \\
-    ${BIN_SS} *, \\
-    ${BIN_CERTBOT} certificates
 EOF
+chmod 0750 /usr/local/sbin/root.sh
 
-# Проверка корректности синтаксиса sudoers
-if visudo -cf "${SUDOERS_FILE}" >/dev/null 2>&1; then
-    chmod 440 "${SUDOERS_FILE}"
-    log_info "Правила sudoers валидны и сохранены в ${SUDOERS_FILE}"
-else
-    log_err "Ошибка синтаксиса в правилах sudoers! Файл удален во избежание сбоев."
-    rm -f "${SUDOERS_FILE}"
-    exit 1
+echo "=== [5/6] Определение текущего SSH-порта ==="
+# Удаляем старый принудительный конфиг смены порта, если он остался от прошлых запусков
+rm -f /etc/ssh/sshd_config.d/90-tgbot-port.conf
+
+# 1. Запрос порта из текущей конфигурации sshd
+DETECTED_PORT=$(sshd -T 2>/dev/null | awk '/^port / {print $2; exit}' || true)
+
+# 2. Если sshd -T недоступен, определяем слушающий сокет sshd
+if [ -z "$DETECTED_PORT" ]; then
+    DETECTED_PORT=$(ss -tlHnp 2>/dev/null | grep -E 'users:.*sshd' | awk '{print $4}' | awk -F: '{print $NF}' | sort -u | head -n 1 || true)
 fi
 
-# 8. Диагностический вывод для ввода параметров в боте
-SSH_PORT=$(ss -tlnp | grep -E 'sshd|ssh' | awk '{print $4}' | awk -F':' '{print $NF}' | head -n 1)
-SSH_PORT=${SSH_PORT:-22}
-SERVER_IP=$(curl -s -m 4 https://api.ipify.org || ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || echo "IP_НЕ_ОПРЕДЕЛЕН")
+# 3. Фоллбек на порт текущей активной SSH-сессии
+if [ -z "$DETECTED_PORT" ] && [ -n "${SSH_CONNECTION:-}" ]; then
+    DETECTED_PORT=$(echo "$SSH_CONNECTION" | awk '{print $4}')
+fi
 
+# Если определить не удалось — стандартный 22
+CURRENT_PORT="${DETECTED_PORT:-22}"
+
+# Проверяем и разрешаем текущий порт в UFW (если фаервол активен)
+if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active"; then
+    ufw allow "${CURRENT_PORT}/tcp" comment "Current SSH Port" >/dev/null
+fi
+
+echo "Текущий SSH-порт сервера: ${CURRENT_PORT} (без изменений)"
+
+echo "=== [6/6] Отпечатки хоста для сверки (TOFU в боте) ==="
+echo "--------------------------------------------------------"
+ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub 2>/dev/null || ssh-keygen -lf /etc/ssh/ssh_host_rsa_key.pub
+echo "--------------------------------------------------------"
+echo "✅ Сервер успешно настроен!"
+echo "• Пользователь: ${BOT_USER}"
+echo "• SSH-порт:     ${CURRENT_PORT}"
+echo "• IP-адрес:     $(hostname -I | awk '{print $1}')"
 echo ""
-echo -e "${GREEN}================================================================${NC}"
-echo -e "${GREEN}        СЕРВЕР ГОТОВ К ДОБАВЛЕНИЮ В TELEGRAM-БОТА!              ${NC}"
-echo -e "${GREEN}================================================================${NC}"
-echo -e "Имя пользователя: ${YELLOW}${TARGET_USER}${NC}"
-echo -e "Внешний IP:       ${YELLOW}${SERVER_IP}${NC}"
-echo -e "SSH-порт:         ${YELLOW}${SSH_PORT}${NC}"
-echo ""
-echo -e "Дальнейшие шаги:"
-echo -e "1. В Telegram-боте нажмите ${GREEN}➕ Добавить сервер${NC}."
-echo -e "2. Укажите понятное имя (например: ${YELLOW}web-node-01${NC})."
-echo -e "3. Отправьте адрес хоста: ${YELLOW}${SERVER_IP}${NC}."
-echo -e "4. Выберите порт ${YELLOW}${SSH_PORT}${NC} и пользователя ${YELLOW}${TARGET_USER}${NC}."
-echo -e "5. Сверьте выведенный ботом отпечаток ключа хоста и подтвердите добавление."
-echo -e "${GREEN}================================================================${NC}"
+echo "В боте при добавлении сервера укажите этот порт: ${CURRENT_PORT}."
